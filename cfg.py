@@ -352,14 +352,14 @@ class CFG(object):
 
     def chamsky(self):
         """
-        Converts the grammar to Chamsky normal form (CNF)
+        Converts the grammar to Chamsky normal form (CNF).
         """
         last_checked_variable = None
         free_variables = []
 
         def new_var():
             """
-            Returns a new variable name that can be added to grammar variables set
+            Returns a new variable name that can be added to grammar variables set.
             """
             nonlocal free_variables
             nonlocal v1
@@ -428,11 +428,11 @@ class CFG(object):
         """
         Phase 2
         """
-        variables = re.compile('|'.join(v1))
+        variables_pattern = re.compile('|'.join(v1))
         # For all rules that are generated in phase 1
         for rule in p1:
             # Get all variables in rule's second part
-            rule_variables = variables.findall(rule[1])
+            rule_variables = variables_pattern.findall(rule[1])
             # If there are only two variables in rule's second part
             if len(rule_variables) == 2:
                 p2.add(rule)
@@ -455,6 +455,9 @@ class CFG(object):
         self._is_chamsky = True
 
     def cyk(self, string):
+        """
+        Checks if grammar can generate passed string or not.
+        """
         string = string.strip()
 
         if not self._is_chamsky:
@@ -467,16 +470,20 @@ class CFG(object):
             if self.accepts_null:
                 return True
             return False
+
         if string == self.null_character:
             return False
 
-        V = [[set() for _ in range(len(string))] for _ in range(len(string))]
-        for i in range(len(string)):
-            V[i][i] = {rule[0] for rule in self.rules if rule[1] == string[i]}
+        V = [[set() if i != j else {rule[0] for rule in self.rules if rule[1] == string[i]}
+              for j in range(len(string))]
+             for i in range(len(string))]
 
         variables_pattern = re.compile('|'.join(self.variables))
 
         def Vij(i, j):
+            """
+            Calculates V[i][j].
+            """
             nonlocal V
 
             for k in range(i, j):
