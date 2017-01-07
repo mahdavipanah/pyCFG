@@ -193,6 +193,9 @@ class CFG(object):
                 ))
             if not pattern.fullmatch(rule[1]):
                 raise ValueError("Rule must contain combination of variables and terminals : '{} -> {}'".format(*rule))
+            if rule[1].count(self.null_character):
+                raise ValueError("Rule cannot combine null character with variables and terminals : '{} -> {}'".format(
+                    *rule))
 
         self._rules = frozenset(new_rules)
         self._is_chamsky = None
