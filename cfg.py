@@ -55,7 +55,20 @@ class RuleNode(object):
 
 
 class CFG(object):
+    """
+    Context free grammar (CFG) class
+    """
     def __init__(self, variables, terminals, rules, start_variable, null_character):
+        """
+        Initialize method
+
+        Parameters
+            variables: grammar's variables set
+            terminals: grammar's terminals set
+            rules:  grammar's rules
+            start_variable: grammar's start variable
+            null_character: grammar's null character
+        """
         self.variables = variables
         self.terminals = terminals
         self.start_variable = start_variable
@@ -67,10 +80,16 @@ class CFG(object):
 
     @property
     def variables(self):
+        """
+        Grammar's variables set property getter
+        """
         return self._variables
 
     @variables.setter
     def variables(self, new_variables):
+        """
+        Grammar's variables set property setter
+        """
         if type(new_variables) is not set:
             raise TypeError("CFG variables must be a set, not '{}'".format(type(new_variables).__name__))
 
@@ -98,10 +117,16 @@ class CFG(object):
 
     @property
     def terminals(self):
+        """
+        Grammar's terminals set property getter
+        """
         return self._terminals
 
     @terminals.setter
     def terminals(self, new_terminals):
+        """
+        Grammar's terminals set property setter
+        """
         if type(new_terminals) is not set:
             raise TypeError("CFG terminals must be a set, not '{}'".format(type(new_terminals).__name__))
 
@@ -129,10 +154,16 @@ class CFG(object):
 
     @property
     def rules(self):
+        """
+        Grammar's rules property getter
+        """
         return self._rules
 
     @rules.setter
     def rules(self, new_rules):
+        """
+        Grammar's rules property setter
+        """
         if type(new_rules) is not set:
             raise TypeError("CFG rules must be a set, not '{}'".format(type(new_rules).__name__))
 
@@ -144,11 +175,9 @@ class CFG(object):
             if type(rule[0]) is not str or type(rule[1]) is not str:
                 raise TypeError("CFG rules must contain strings")
             if string_contains_space(rule[0]) or string_contains_space(rule[1]):
-                raise ValueError("Rule cannot contain white spaces : '{} -> {}'".format(rule[0], rule[1]))
+                raise ValueError("Rule cannot contain white spaces : '{} -> {}'".format(*rule))
 
-        escaped_vars_and_rules = {re.escape(item) for item in self.variables | self.terminals}
-
-        pattern = re.compile('({})+'.format('|'.join(escaped_vars_and_rules)))
+        pattern = re.compile('({})+'.format('|'.join({re.escape(item) for item in self.variables | self.terminals})))
 
         for rule in new_rules:
             if rule[0] not in self.variables:
@@ -157,7 +186,7 @@ class CFG(object):
                     p1=rule[1]
                 ))
             if not pattern.fullmatch(rule[1]):
-                raise ValueError("Rule must contain combination of variables and terminals : {}".format(rule[1]))
+                raise ValueError("Rule must contain combination of variables and terminals : '{} -> {}'".format(*rule))
 
         self._rules = frozenset(new_rules)
         self._is_chamsky = None
@@ -168,10 +197,16 @@ class CFG(object):
 
     @property
     def start_variable(self):
+        """
+        Grammar's start_variable property getter
+        """
         return self._start_variable
 
     @start_variable.setter
     def start_variable(self, new_start_variable):
+        """
+        Grammar's start_variable property setter
+        """
         if type(new_start_variable) is not str:
             raise TypeError("CFG start variable must be string, not '{}'".format(type(new_start_variable).__name__))
 
@@ -185,10 +220,16 @@ class CFG(object):
 
     @property
     def null_character(self):
+        """
+        Grammar's null_character property getter
+        """
         return self._null_character
 
     @null_character.setter
     def null_character(self, new_null_character):
+        """
+        Grammar's null_character property setter
+        """
         if type(new_null_character) is not str:
             raise TypeError("CFG null character must be string, not '{}'".format(type(new_null_character).__name__))
 
