@@ -58,6 +58,7 @@ class CFG(object):
     """
     Context free grammar (CFG) class
     """
+
     def __init__(self, variables, terminals, rules, start_variable, null_character):
         """
         Initialize method
@@ -242,7 +243,14 @@ class CFG(object):
         self.accepts_null = None
 
     def remove_null_rules(self):
+        """
+        Removes null rules from grammar.
+        """
         nullable_vars = {rule[0] for rule in self.rules if rule[1] == self.null_character}
+
+        if not nullable_vars:
+            return
+
         while True:
             is_nullable = re.compile('({})+'.format('|'.join(nullable_vars)))
             new_nullable_vars = {rule[0] for rule in self.rules if is_nullable.fullmatch(rule[1])}
@@ -250,9 +258,6 @@ class CFG(object):
             if new_set == nullable_vars:
                 break
             nullable_vars = new_set
-
-        if not nullable_vars:
-            return
 
         contains_nullable = re.compile('({})'.format('|'.join(nullable_vars)))
 
@@ -290,6 +295,9 @@ class CFG(object):
         return {rule[1] for rule in self.rules if rule[0] == var} - self._var_none_unit_rules(var)
 
     def remove_unit_rules(self):
+        """
+        Removes unit rules from grammar.
+        """
 
         def get_related_unit_rules(var, var_related_unit_rules):
             prev_related_unit_rules = copy(var_related_unit_rules)
@@ -299,6 +307,7 @@ class CFG(object):
                 get_related_unit_rules(unit_var, var_related_unit_rules)
 
         related_unit_rules = dict([(var, set()) for var in self.variables])
+
         for var in self.variables:
             get_related_unit_rules(var, related_unit_rules[var])
             related_unit_rules[var] -= {var}
@@ -313,22 +322,30 @@ class CFG(object):
         self._rules = frozenset(non_unit_rules)
 
     def reduct(self):
-        # Phase 1
+        """
+        Reducts grammar's rules.
+        """
+        """
+        Phase 1
+        """
         v1 = set()
         while True:
             v1_union_t = v1 | self.terminals
-            pattern = re.compile('({})+'.format('|'.join(v1_union_t)))
+            v1_union_t_pattern = re.compile('({})+'.format('|'.join(v1_union_t)))
             prev_v1 = copy(v1)
             for var in self.variables:
-                if {rule for rule in self.rules if rule[0] == var and pattern.fullmatch(rule[1])}:
+                if {rule for rule in self.rules if rule[0] == var and v1_union_t_pattern.fullmatch(rule[1])}:
                     v1.add(var)
             if prev_v1 == v1:
                 break
-        p1 = {rule for rule in self.rules if pattern.fullmatch(rule[1])}
+        p1 = {rule for rule in self.rules if v1_union_t_pattern.fullmatch(rule[1])}
 
         is_rule = re.compile('({})'.format('|'.join(v1)))
 
-        # Phase 2
+        """
+        Phase 2
+        """
+
         def get_related_vars(var, related_vars):
             var_related_vars = set()
             for rule in {rule[1] for rule in p1 if rule[0] == var}:
@@ -344,7 +361,7 @@ class CFG(object):
         v1 = S_related_vars
         v1.add(self.start_variable)
         is_related_rule = re.compile('|'.join(v1))
-        p1 -= {rule for rule in p1 if not is_related_rule.search(rule[0])}
+        p1 -= {rule for rule in p1 if not is_related_rule.fullmatch(rule[0])}
 
         terminals_pattern = re.compile('|'.join(self.terminals))
         t1 = {self.null_character}
@@ -356,6 +373,9 @@ class CFG(object):
         self._terminals = frozenset(t1)
 
     def simplify(self):
+        """
+        Simplifies the grammar.
+        """
         self.remove_null_rules()
         self.remove_unit_rules()
         self.reduct()
@@ -417,54 +437,36 @@ class CFG(object):
         """
         Phase 1
         """
-        # Simplify the grammar
         self.simplify()
 
-        # CNF's variables set
         v1 = set(self.variables)
-        # Temporary rules set
         p1 = set()
-        # CNF's rules set
         p2 = set()
 
         is_terminal = re.compile('|'.join(self.terminals))
 
-        # A dictionary that maps a terminal to a single variable that only has one rule that generates that terminal
         terminal_rules = {}
-        # Look for any single rule variable that generates a terminal in grammar
         for var in self.variables:
-            # Get all second parts of variable's rules
             var_rules = [rule[1] for rule in self.rules if rule[0] == var]
-            # If variable only has one rule
             if len(var_rules) == 1:
-                # See if the second part is a terminal
                 if is_terminal.fullmatch(var_rules[0]):
-                    # Add the terminal and it's variable to dictionary
                     terminal_rules[var_rules[0]] = var
 
         for rule in self.rules:
-            # If rule generates a single terminal
             if is_terminal.fullmatch(rule[1]):
                 p2.add(rule)
             else:
-                # All terminals in rule's second part
                 rule_terminals = is_terminal.findall(rule[1])
-                # If rule's second part only consists of variables
                 if not rule_terminals:
                     p1.add(rule)
                 else:
-                    # Copy the rule's second part
                     old_rule = rule[1]
-                    # For each terminal in rule's second part
                     for rule_terminal in rule_terminals:
-                        # If there is no single ruled variable that generates the
-                        #   terminal then add a new variable and it's rule
                         if not terminal_rules.get(rule_terminal, None):
                             new_variable = new_var()
                             terminal_rules[rule_terminal] = new_variable
                             p2.add((new_variable, rule_terminal))
                             v1.add(new_variable)
-                        # Replace rule's second part's terminals with their single ruled variables
                         old_rule = old_rule.replace(rule_terminal, terminal_rules[rule_terminal])
 
                     p1.add((rule[0], old_rule))
@@ -473,18 +475,11 @@ class CFG(object):
         Phase 2
         """
         variables_pattern = re.compile('|'.join(v1))
-        # For all rules that are generated in phase 1
         for rule in p1:
-            # Get all variables in rule's second part
             rule_variables = variables_pattern.findall(rule[1])
-            # If there are only two variables in rule's second part
             if len(rule_variables) == 2:
                 p2.add(rule)
             else:
-                """
-                Break down the rule's second part into some other variables and rules that have only two variables
-                in their second parts
-                """
                 new_vars = [new_var() for _ in range(len(rule_variables) - 2)]
                 p2.add((rule[0], rule_variables.pop(0) + new_vars[-1]))
                 for i in range(len(new_vars) - 2):
