@@ -532,6 +532,9 @@ class CFG(object):
         return line_splitter.join(str_lines)
 
     def __str__(self):
+        """
+        Returns a human-readable string representation of the grammar.
+        """
         print_lines = []
         print_lines.append("Variables (V): {}".format(set(self.variables)))
         print_lines.append("Terminals (Σ): {}".format(set(self.terminals)))
