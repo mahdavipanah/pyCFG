@@ -55,10 +55,11 @@ class CFG(object):
     def __init__(self, variables, terminals, rules, start_variable, null_character):
         self.variables = variables
         self.terminals = terminals
-        self.rules = rules
         self.start_variable = start_variable
         self.null_character = null_character
-        self._is_chamsky = False
+        self.accepts_null = None
+        self.rules = rules
+        self._is_chamsky = None
         self._cnf = None
 
     @property
@@ -153,13 +154,15 @@ class CFG(object):
 
         self._rules = frozenset(new_rules)
         self._is_chamsky = False
+        if (self.start_variable, self.null_character) in self._rules:
+            self.accepts_null = True
 
     @property
-    def _start_variable(self):
+    def start_variable(self):
         return self._start_variable
 
-    @_start_variable.setter
-    def _start_variable(self, new_start_variable):
+    @start_variable.setter
+    def start_variable(self, new_start_variable):
         if type(new_start_variable) is not str:
             raise TypeError("CFG start variable must be string, not '{}'".format(type(new_start_variable).__name__))
 
@@ -197,10 +200,6 @@ class CFG(object):
         if not nullable_vars:
             return
 
-        grammar_accepts_null = False
-        if self.start_variable in nullable_vars:
-            grammar_accepts_null = True
-
         contains_nullable = re.compile('({})'.format('|'.join(nullable_vars)))
 
         new_rules = set()
@@ -224,9 +223,6 @@ class CFG(object):
 
                 tree_search(RuleNode(splits))
             new_rules.add(rule)
-
-        if grammar_accepts_null:
-            new_rules.add((self.start_variable, self.null_character))
 
         self._rules = frozenset(new_rules)
 
@@ -301,9 +297,9 @@ class CFG(object):
         for rule in p1:
             t1 |= set(terminals_pattern.findall(rule[1]))
 
-        self._variables = v1
-        self._rules = p1
-        self._terminals = t1
+        self._variables = frozenset(v1)
+        self._rules = frozenset(p1)
+        self._terminals = frozenset(t1)
 
     def simplify(self):
         self.remove_null_rules()
@@ -363,13 +359,21 @@ class CFG(object):
         v1 = set(self.variables)
         p1 = set()
         is_terminal = re.compile('|'.join(self.terminals))
+
         terminal_rules = {}
+        for var in self.variables:
+            var_rules = [rule[1] for rule in self.rules if rule[0] == var]
+            if len(var_rules) == 1:
+                if is_terminal.fullmatch(var_rules[0]):
+                    terminal_rules[var_rules[0]] = var
+
         for rule in self.rules:
             if is_terminal.fullmatch(rule[1]):
                 p1.add(rule)
             else:
                 rule_terminals = is_terminal.findall(rule[1])
                 if not rule_terminals:
+                    p1.add(rule)
                     continue
 
                 old_rule = rule[1]
@@ -383,7 +387,6 @@ class CFG(object):
                     old_rule = old_rule.replace(rule_terminal, terminal_rules[rule_terminal])
 
                 p1.add((rule[0], old_rule))
-
         # Phase 2
         variables = re.compile('|'.join(v1))
         p2 = set()
@@ -405,11 +408,13 @@ class CFG(object):
                 p2.add((new_vars[-1], b + a))
                 v1 |= set(new_vars)
 
-        self._variables = v1
-        self._rules = p2
+        self._variables = frozenset(v1)
+        self._rules = frozenset(p2)
         self._is_chamsky = True
 
     def cyk(self, string):
+        string = string.strip()
+
         if not self._is_chamsky:
             if not self._cnf:
                 self._cnf = copy(self)
@@ -417,7 +422,7 @@ class CFG(object):
             self = self._cnf
 
         if string == '':
-            if {rule for rule in self.rules if rule[1] == self.null_character}:
+            if self.accepts_null:
                 return True
             return False
         if string == self.null_character:
@@ -465,6 +470,10 @@ class CFG(object):
         vars = list(vars)
         vars.sort()
         vars.insert(0, self.start_variable)
+
+        if self.accepts_null:
+            if not self.null_character in rules_var[self.start_variable]:
+                rules_var[self.start_variable].append(self.null_character)
 
         str_lines = [prepend + '{} -> {}'.format(var, ' | '.join(rules_var[var])) for var in vars]
 
