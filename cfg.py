@@ -89,7 +89,9 @@ class CFG(object):
                                      .format(first_str, second_str))
 
         self._variables = frozenset(new_variables)
-        self._is_chamsky = False
+        self._is_chamsky = None
+        self._cnf = None
+        self.accepts_null = None
 
     @property
     def terminals(self):
@@ -118,7 +120,9 @@ class CFG(object):
                                      .format(first_str, second_str))
 
         self._terminals = frozenset(new_terminals)
-        self._is_chamsky = False
+        self._is_chamsky = None
+        self._cnf = None
+        self.accepts_null = None
 
     @property
     def rules(self):
@@ -153,7 +157,9 @@ class CFG(object):
                 raise ValueError("Rule must contain combination of variables and terminals : {}".format(rule[1]))
 
         self._rules = frozenset(new_rules)
-        self._is_chamsky = False
+        self._is_chamsky = None
+        self._cnf = None
+        self.accepts_null = None
         if (self.start_variable, self.null_character) in self._rules:
             self.accepts_null = True
 
@@ -170,7 +176,9 @@ class CFG(object):
             raise ValueError("Start variable must be in variables set")
 
         self._start_variable = new_start_variable
-        self._is_chamsky = False
+        self._is_chamsky = None
+        self._cnf = None
+        self.accepts_null = None
 
     @property
     def null_character(self):
@@ -185,7 +193,9 @@ class CFG(object):
             raise ValueError("Null character must be in terminals set")
 
         self._null_character = new_null_character
-        self._is_chamsky = False
+        self._is_chamsky = None
+        self._cnf = None
+        self.accepts_null = None
 
     def remove_null_rules(self):
         nullable_vars = {rule[0] for rule in self.rules if rule[1] == self.null_character}
@@ -341,10 +351,16 @@ class CFG(object):
         return var_names[:n], var_name
 
     def chamsky(self):
+        """
+        Converts the grammar to Chamsky normal form (CNF)
+        """
         last_checked_variable = None
         free_variables = []
 
         def new_var():
+            """
+            Returns a new variable name that can be added to grammar variables set
+            """
             nonlocal free_variables
             nonlocal v1
             nonlocal last_checked_variable
@@ -354,51 +370,77 @@ class CFG(object):
 
             return free_variables.pop(0)
 
-        # Phase 1
+        """
+        Phase 1
+        """
+        # Simplify the grammar
         self.simplify()
+
+        # CNF's variables set
         v1 = set(self.variables)
+        # Temporary rules set
         p1 = set()
+        # CNF's rules set
+        p2 = set()
+
         is_terminal = re.compile('|'.join(self.terminals))
 
+        # A dictionary that maps a terminal to a single variable that only has one rule that generates that terminal
         terminal_rules = {}
+        # Look for any single rule variable that generates a terminal in grammar
         for var in self.variables:
+            # Get all second parts of variable's rules
             var_rules = [rule[1] for rule in self.rules if rule[0] == var]
+            # If variable only has one rule
             if len(var_rules) == 1:
+                # See if the second part is a terminal
                 if is_terminal.fullmatch(var_rules[0]):
+                    # Add the terminal and it's variable to dictionary
                     terminal_rules[var_rules[0]] = var
 
         for rule in self.rules:
-            if is_terminal.fullmatch(rule[1]):
-                p1.add(rule)
-            else:
-                rule_terminals = is_terminal.findall(rule[1])
-                if not rule_terminals:
-                    p1.add(rule)
-                    continue
-
-                old_rule = rule[1]
-
-                for rule_terminal in rule_terminals:
-                    if not terminal_rules.get(rule_terminal, None):
-                        new_variable = new_var()
-                        terminal_rules[rule_terminal] = new_variable
-                        p1.add((new_variable, rule_terminal))
-                        v1.add(new_variable)
-                    old_rule = old_rule.replace(rule_terminal, terminal_rules[rule_terminal])
-
-                p1.add((rule[0], old_rule))
-        # Phase 2
-        variables = re.compile('|'.join(v1))
-        p2 = set()
-        for rule in p1:
+            # If rule generates a single terminal
             if is_terminal.fullmatch(rule[1]):
                 p2.add(rule)
-                continue
+            else:
+                # All terminals in rule's second part
+                rule_terminals = is_terminal.findall(rule[1])
+                # If rule's second part only consists of variables
+                if not rule_terminals:
+                    p1.add(rule)
+                else:
+                    # Copy the rule's second part
+                    old_rule = rule[1]
+                    # For each terminal in rule's second part
+                    for rule_terminal in rule_terminals:
+                        # If there is no single ruled variable that generates the
+                        #   terminal then add a new variable and it's rule
+                        if not terminal_rules.get(rule_terminal, None):
+                            new_variable = new_var()
+                            terminal_rules[rule_terminal] = new_variable
+                            p2.add((new_variable, rule_terminal))
+                            v1.add(new_variable)
+                        # Replace rule's second part's terminals with their single ruled variables
+                        old_rule = old_rule.replace(rule_terminal, terminal_rules[rule_terminal])
 
+                    p1.add((rule[0], old_rule))
+
+        """
+        Phase 2
+        """
+        variables = re.compile('|'.join(v1))
+        # For all rules that are generated in phase 1
+        for rule in p1:
+            # Get all variables in rule's second part
             rule_variables = variables.findall(rule[1])
+            # If there are only two variables in rule's second part
             if len(rule_variables) == 2:
                 p2.add(rule)
             else:
+                """
+                Break down the rule's second part into some other variables and rules that have only two variables
+                in their second parts
+                """
                 new_vars = [new_var() for _ in range(len(rule_variables) - 2)]
                 p2.add((rule[0], rule_variables.pop(0) + new_vars[-1]))
                 for i in range(len(new_vars) - 2):
