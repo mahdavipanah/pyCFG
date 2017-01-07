@@ -570,7 +570,7 @@ class CFG(object):
         vars.insert(0, self.start_variable)
 
         if self.accepts_null:
-            if not self.null_character in rules_var[self.start_variable]:
+            if self.null_character not in rules_var[self.start_variable]:
                 rules_var[self.start_variable].append(self.null_character)
 
         str_lines = [prepend + '{} -> {}'.format(var, ' | '.join(rules_var[var])) for var in vars]
