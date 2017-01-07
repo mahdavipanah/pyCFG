@@ -11,10 +11,13 @@ from copy import deepcopy, copy
 
 
 def strings_contain_each_other(first_str, second_str):
-    if (type(first_str) is not str
-        or type(second_str) is not str):
-        raise TypeError("strings_contain_each_other() arguments must be strings")
+    """
+    Checks if two strings contain each other.
 
+    Returns (the bool value that says if they are containing each other,
+            the string that includes,
+            the string that is included)
+    """
     first_count = second_str.count(first_str)
     second_count = first_str.count(second_str)
 
