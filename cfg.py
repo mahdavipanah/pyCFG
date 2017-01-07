@@ -503,6 +503,9 @@ class CFG(object):
         return False
 
     def str_rules(self, *, return_list=False, prepend='', line_splitter='\n'):
+        """
+        Returns a human-readable string representation of grammar's rules
+        """
         rules_var = {}
         vars = set()
         for rule in self.rules:
@@ -516,8 +519,7 @@ class CFG(object):
         for rules in rules_var.values():
             rules.sort()
 
-        vars = list(vars)
-        vars.sort()
+        vars = sorted(vars)
         vars.insert(0, self.start_variable)
 
         if self.accepts_null:
