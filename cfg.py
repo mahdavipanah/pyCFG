@@ -40,6 +40,11 @@ def string_contains_space(string):
     return False
 
 
+def re_escaped(it):
+    for i in it:
+        yield re.escape(i)
+
+
 class RuleNode(object):
     def __init__(self, value=None):
         self.value = value
@@ -178,7 +183,7 @@ class CFG(object):
             if string_contains_space(rule[0]) or string_contains_space(rule[1]):
                 raise ValueError("Rule cannot contain white spaces : '{} -> {}'".format(*rule))
 
-        pattern = re.compile('({})+'.format('|'.join({re.escape(item) for item in self.variables | self.terminals})))
+        pattern = re.compile('({})+'.format('|'.join(re_escaped(self.variables | self.terminals))))
 
         for rule in new_rules:
             if rule[0] not in self.variables:
@@ -252,14 +257,14 @@ class CFG(object):
             return
 
         while True:
-            is_nullable = re.compile('({})+'.format('|'.join(nullable_vars)))
+            is_nullable = re.compile('({})+'.format('|'.join(re_escaped(nullable_vars))))
             new_nullable_vars = {rule[0] for rule in self.rules if is_nullable.fullmatch(rule[1])}
             new_set = nullable_vars | new_nullable_vars
             if new_set == nullable_vars:
                 break
             nullable_vars = new_set
 
-        contains_nullable = re.compile('({})'.format('|'.join(nullable_vars)))
+        contains_nullable = re.compile('({})'.format('|'.join(re_escaped(nullable_vars))))
 
         new_rules = set()
 
@@ -286,7 +291,7 @@ class CFG(object):
         self._rules = frozenset(new_rules)
 
     def _var_none_unit_rules(self, var):
-        is_unit_rule = re.compile('({})'.format('|'.join(self.variables)))
+        is_unit_rule = re.compile('({})'.format('|'.join(re_escaped(self.variables))))
         return {rule[1] for rule in self.rules
                 if rule[0] == var and
                 not is_unit_rule.fullmatch(rule[1])}
@@ -331,7 +336,7 @@ class CFG(object):
         v1 = set()
         while True:
             v1_union_t = v1 | self.terminals
-            v1_union_t_pattern = re.compile('({})+'.format('|'.join(v1_union_t)))
+            v1_union_t_pattern = re.compile('({})+'.format('|'.join(re_escaped(v1_union_t))))
             prev_v1 = copy(v1)
             for var in self.variables:
                 if {rule for rule in self.rules if rule[0] == var and v1_union_t_pattern.fullmatch(rule[1])}:
@@ -340,7 +345,7 @@ class CFG(object):
                 break
         p1 = {rule for rule in self.rules if v1_union_t_pattern.fullmatch(rule[1])}
 
-        is_rule = re.compile('({})'.format('|'.join(v1)))
+        is_rule = re.compile('({})'.format('|'.join(re_escaped((v1)))))
 
         """
         Phase 2
@@ -360,10 +365,10 @@ class CFG(object):
         get_related_vars(self.start_variable, S_related_vars)
         v1 = S_related_vars
         v1.add(self.start_variable)
-        is_related_rule = re.compile('|'.join(v1))
+        is_related_rule = re.compile('|'.join(re_escaped(v1)))
         p1 -= {rule for rule in p1 if not is_related_rule.fullmatch(rule[0])}
 
-        terminals_pattern = re.compile('|'.join(self.terminals))
+        terminals_pattern = re.compile('|'.join(re_escaped(self.terminals)))
         t1 = {self.null_character}
         for rule in p1:
             t1 |= set(terminals_pattern.findall(rule[1]))
@@ -443,7 +448,7 @@ class CFG(object):
         p1 = set()
         p2 = set()
 
-        is_terminal = re.compile('|'.join(self.terminals))
+        is_terminal = re.compile('|'.join(re_escaped(self.terminals)))
 
         terminal_rules = {}
         for var in self.variables:
@@ -474,7 +479,7 @@ class CFG(object):
         """
         Phase 2
         """
-        variables_pattern = re.compile('|'.join(v1))
+        variables_pattern = re.compile('|'.join(re_escaped(v1)))
         for rule in p1:
             rule_variables = variables_pattern.findall(rule[1])
             if len(rule_variables) == 2:
@@ -517,7 +522,7 @@ class CFG(object):
               for j in range(len(string))]
              for i in range(len(string))]
 
-        variables_pattern = re.compile('|'.join(self.variables))
+        variables_pattern = re.compile('|'.join(re_escaped(self.variables)))
 
         def Vij(i, j):
             """
