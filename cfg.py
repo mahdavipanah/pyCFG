@@ -30,9 +30,9 @@ def strings_contain_each_other(first_str, second_str):
 
 
 def string_contains_space(string):
-    if type(string) is not str:
-        raise TypeError("string_contains_space() argument must be string not {}".format(type(string).__name__))
-
+    """
+    Returns true if string contains space, false otherwise.
+    """
     for char in string:
         if char.isspace():
             return True
