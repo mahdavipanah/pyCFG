@@ -17,8 +17,11 @@ Open terminal and install these packages:
 sudo apt-get install python3.5 python3-tk
 ```
 Now you can run pyCFG from terminal: `./pycfg.py`
+
 ### Windows
 
+You can download pyCFG's binary for windows from [Here](https://github.com/mahdavipanah/pyCFG/releases)  
+Or  
 Download and install Python's installer (version 3.5 or higher) from [it's official website](https://www.python.org/downloads/).
 Now you can run
 pycfg.py from command line: `python pycfg.py`.
