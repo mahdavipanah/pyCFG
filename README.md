@@ -1,7 +1,9 @@
 pyCFG is an application and library for working with context free grammars (CFG) in [Python](https://www.python.org/).
 It uses [tkinter](https://wiki.python.org/moin/TkInter) for it's graphical interface.
 
-![pyCFG screenshot](./assets/screenshot.png)
+<p align="center">
+  <img src="./assets/screenshot.png" alt="pyCFG app screenshot">
+</p>
 
 ## Installing application
 
