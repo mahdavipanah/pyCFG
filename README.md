@@ -1,8 +1,7 @@
-![pyCFG](http://mahdavipanah.com/blog/wp-content/uploads/2017/01/pycfg.png)
-
 pyCFG is an application and library for working with context free grammars (CFG) in [Python](https://www.python.org/).
 It uses [tkinter](https://wiki.python.org/moin/TkInter) for it's graphical interface.
 
+![pyCFG screenshot](./assets/screenshot.png)
 
 ## Installing application
 
@@ -10,21 +9,15 @@ It uses [tkinter](https://wiki.python.org/moin/TkInter) for it's graphical inter
 - [Python3.5+](https://www.python.org/)
 - [tkinter](https://wiki.python.org/moin/TkInter)
 
-### Debian Linux (Ubuntu)
+### Running
 
-Open terminal and install these packages:
-```Bash
-sudo apt-get install python3.5 python3-tk
+```bash
+$ python pycfg.py
 ```
-Now you can run pyCFG from terminal: `./pycfg.py`
 
 ### Windows
 
-You can download pyCFG's binary for windows from [Here](https://github.com/mahdavipanah/pyCFG/releases)  
-Or  
-Download and install Python's installer (version 3.5 or higher) from [it's official website](https://www.python.org/downloads/).
-Now you can run
-pycfg.py from command line: `python pycfg.py`.
+You can download pyCFG's binary for windows from [Here](https://github.com/mahdavipanah/pyCFG/releases).
 
 ## Using library
 pyCFG library is in `cfg.py` module and can be imported and be used easily. For example:
