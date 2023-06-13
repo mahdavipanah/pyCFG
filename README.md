@@ -40,6 +40,14 @@ else:
 ```
 Above program gets a string from input and tells if the defined grammer can generate the string or not.
 
+## Tests
+
+If you want to test, make sure that `pytest` is installed, then run:
+
+~~~bash
+pytest test.py
+~~~
+
 ## Author
 
 Hamidreza Mahdavipanah
