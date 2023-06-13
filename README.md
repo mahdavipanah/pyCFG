@@ -51,6 +51,11 @@ pytest test.py
 
 Hamidreza Mahdavipanah
 
+### Contributors
+
+- Lucas Seiki Oshiro
+
+
 ## License
 
 [MIT](./LICENSE)
