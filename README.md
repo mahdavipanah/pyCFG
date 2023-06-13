@@ -26,10 +26,9 @@ pyCFG library is in `cfg.py` module and can be imported and be used easily. For 
 ```Python
 from cfg import CFG
 
-g = CFG({'S'}, {'a', 'b', 'c', 'λ'}, {('S', 'aSa'),
-                                      ('S', 'bSb'),
-                                      ('S', 'cSc'),
-                                      ('S', 'λ')}, 'S', 'λ')
+g = CFG(terminals={'a', 'b', 'c', 'λ'},
+        rules={'S': ['aSa', 'bSb', 'cSc', 'λ']}
+        )
 
 string = input("Enter a string: ")
 
