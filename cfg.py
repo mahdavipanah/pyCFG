@@ -77,8 +77,8 @@ class CFG(object):
             variables (optional): grammar's variables set.
             terminals: grammar's terminals set
             rules:  grammar's rules
-            start_variable: grammar's start variable
-            null_character: grammar's null character
+            start_variable (optional, defaults to 'S'): grammar's start variable
+            null_character (optional, defaults to 'λ'): grammar's null character
         """
 
         if variables is None:
