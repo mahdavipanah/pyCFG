@@ -26,10 +26,9 @@ pyCFG library is in `cfg.py` module and can be imported and be used easily. For 
 ```Python
 from cfg import CFG
 
-g = CFG({'S'}, {'a', 'b', 'c', 'λ'}, {('S', 'aSa'),
-                                      ('S', 'bSb'),
-                                      ('S', 'cSc'),
-                                      ('S', 'λ')}, 'S', 'λ')
+g = CFG(terminals={'a', 'b', 'c', 'λ'},
+        rules={'S': ['aSa', 'bSb', 'cSc', 'λ']}
+        )
 
 string = input("Enter a string: ")
 
@@ -40,9 +39,22 @@ else:
 ```
 Above program gets a string from input and tells if the defined grammer can generate the string or not.
 
+## Tests
+
+If you want to test, make sure that `pytest` is installed, then run:
+
+~~~bash
+pytest test.py
+~~~
+
 ## Author
 
 Hamidreza Mahdavipanah
+
+### Contributors
+
+- Lucas Seiki Oshiro
+
 
 ## License
 

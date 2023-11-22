@@ -64,17 +64,55 @@ class CFG(object):
     Context free grammar (CFG) class
     """
 
-    def __init__(self, variables, terminals, rules, start_variable, null_character):
+    def __init__(self,
+                 variables=None,
+                 terminals=None,
+                 rules=None,
+                 start_variable='S',
+                 null_character='λ'):
         """
         Initialize method
 
         Parameters
-            variables: grammar's variables set
+            variables (optional): grammar's variables set.
             terminals: grammar's terminals set
             rules:  grammar's rules
-            start_variable: grammar's start variable
-            null_character: grammar's null character
+            start_variable (optional, defaults to 'S'): grammar's start variable
+            null_character (optional, defaults to 'λ'): grammar's null character
         """
+
+        if variables is None:
+            variables = set()
+        elif hasattr(variables, '__iter__'):
+            variables = {*variables}
+        else:
+            raise TypeError(
+                "CFG variables must be a iterable, not {}".format(type(variables).__name__)
+            )
+
+        if isinstance(rules, dict):
+            variables |= {*rules}
+            rules = {
+                (var, var_rule)
+                for var, var_rules in rules.items()
+                for var_rule in var_rules
+            }
+        elif hasattr(rules, '__iter__'):
+            rules = {*rules}
+        else:
+            raise TypeError(
+                "CFG rules must be a collection or a dict, not {}".format(type(rules).__name__)
+            )
+
+        if isinstance(terminals, set):
+            terminals = terminals
+        elif hasattr(terminals, '__iter__'):
+            terminals = {*terminals}
+        else:
+            raise TypeError(
+                "CFG variables must be a iterable, not {}".format(type(variables).__name__)
+            )
+
         self.variables = variables
         self.terminals = terminals
         self.start_variable = start_variable
